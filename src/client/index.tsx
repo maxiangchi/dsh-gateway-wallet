@@ -26,20 +26,21 @@ const CSS = [
   "div:has(> [data-slot='sidebar.footer.action']){flex-wrap:wrap;gap:6px}",
   "[data-slot='sidebar.footer.action']:has(.gww_rail){flex:none;width:36px}",
   '.gww_layer{flex:0 0 100%;min-width:0;align-items:center;height:49px;margin:8px 0 0;display:flex;position:relative}',
-  '.gww_badge{width:100%;min-width:0;height:49px;color:var(--dsw-alias-label-primary);cursor:pointer;background:0 0;border:none;border-radius:12px;align-items:center;gap:8px;padding:0 8px 0 6px;font-family:inherit;font-size:14px;display:inline-flex;position:relative}',
+  '.gww_badge{width:100%;min-width:0;height:49px;color:var(--dsw-alias-label-primary);cursor:pointer;background-color:Canvas;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;align-items:center;gap:8px;padding:0 12px 0 8px;font-family:inherit;display:inline-flex;position:relative}',
   '.gww_badge:hover{background:var(--dsw-alias-interactive-bg-hover-solid)}',
   '.gww_badge[data-active]{background:var(--dsw-alias-interactive-bg-hover)}',
   '.gww_badgeIcon{flex:none;display:inline-flex;align-items:center;position:relative}',
   '.gww_dot{position:absolute;top:-2px;right:-3px;width:7px;height:7px;border-radius:50%;background:var(--dsw-alias-state-warn-primary);box-shadow:0 0 0 1.5px var(--dsw-alias-bg-base);pointer-events:none}',
-  '.gww_badgeLabel{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}',
-  '.gww_badgeValue{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;flex:none;margin-left:auto;font-size:12px;line-height:16px}',
+  '.gww_badgeValue{color:var(--dsw-alias-label-primary);font-variant-numeric:tabular-nums;flex:none;min-width:0;font-size:17px;line-height:22px;font-weight:600}',
   '.gww_badge[data-low] .gww_badgeValue{color:var(--dsw-alias-state-warn-primary)}',
+  '.gww_badgeToday{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;flex:none;margin-left:auto;font-size:12px;line-height:16px}',
+  '.gww_badge[data-low] .gww_badgeToday{color:var(--dsw-alias-state-warn-primary)}',
   '.gww_stat[data-low] .gww_statValue{color:var(--dsw-alias-state-warn-primary)}',
   '.gww_layer.gww_rail{flex:none;width:36px;height:36px;margin:0;overflow:visible}',
   '.gww_layer.gww_rail .gww_badge{border-radius:50%;justify-content:center;gap:0;width:36px;height:36px;padding:0;overflow:visible}',
   '.gww_layer.gww_rail .gww_badgeIcon{position:static}',
   '.gww_layer.gww_rail .gww_dot{top:1px;right:1px}',
-  '.gww_layer.gww_rail .gww_badgeLabel,.gww_layer.gww_rail .gww_badgeValue{display:none}',
+  '.gww_layer.gww_rail .gww_badgeLabel,.gww_layer.gww_rail .gww_badgeValue,.gww_layer.gww_rail .gww_badgeToday{display:none}',
   '.gww_panel{z-index:30;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);background-color:Canvas;background-image:linear-gradient(rgb(from var(--dsw-alias-bg-overlay,var(--dsw-alias-bg-base)) r g b / 1),rgb(from var(--dsw-alias-bg-overlay,var(--dsw-alias-bg-base)) r g b / 1));width:380px;max-width:calc(100vw - 24px);max-height:76vh;box-shadow:var(--dsw-shadow-lv2);border-radius:12px;flex-direction:column;display:flex;position:fixed;overflow:hidden;backdrop-filter:none;-webkit-backdrop-filter:none}',
   '.gww_header{box-sizing:border-box;border-bottom:1px solid var(--dsw-alias-border-l2);flex:none;justify-content:space-between;align-items:center;min-height:44px;padding:10px 12px;display:flex;gap:8px}',
   '.gww_title{color:var(--dsw-alias-label-primary);font-size:13px;font-weight:500;line-height:20px;white-space:nowrap}',
@@ -592,6 +593,12 @@ function WalletSeat({ wide = true, useSessions }: SeatProps & { useSessions?: (s
           }
         : { title: error }
   const badgeValue = loading === 'block' ? '…' : badgeRemaining
+  // 徽标第二位：今日实扣（读不到时显示占位，不猜 0）。
+  const badgeToday = loading === 'block'
+    ? ''
+    : snapshot?.todayAvailable === true
+      ? `今日 ${fmtMoney(snapshot.today)}`
+      : '今日 —'
   const low = snapshot !== undefined && loading !== 'block' && isLowBalance(snapshot.remaining, snapshot.unlimited)
   const reload = (): void => {
     if (busy) return
@@ -615,8 +622,8 @@ function WalletSeat({ wide = true, useSessions }: SeatProps & { useSessions?: (s
           <IconApiOutlineRegular size={wide === false ? 18 : 14} />
           {low && <span className="gww_dot" aria-hidden="true" />}
         </span>
-        <span className="gww_badgeLabel">站点余额</span>
         <span className="gww_badgeValue" {...loading === 'block' ? { 'data-wait': '' } : {}}>{badgeValue}</span>
+        <span className="gww_badgeToday">{badgeToday}</span>
       </button>
       {open && anchor !== undefined && (
         <div
