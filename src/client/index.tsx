@@ -83,7 +83,13 @@ const CSS = [
 
 function ensureCss(): void {
   if (typeof document === 'undefined') return
-  if (document.querySelector(`style[data-plugin-css=${JSON.stringify(STYLE_ID)}]`) !== null) return
+  const existing = document.querySelector(`style[data-plugin-css=${JSON.stringify(STYLE_ID)}]`)
+  // 热更新后同 id 的旧样式还挂在 head 里；内容变了就原位替换，保证新样式生效。
+  if (existing !== null) {
+    if (existing.textContent === CSS) return
+    existing.textContent = CSS
+    return
+  }
   const tag = document.createElement('style')
   tag.dataset.plugin = 'dsh-gateway-wallet'
   tag.dataset.pluginCss = STYLE_ID
