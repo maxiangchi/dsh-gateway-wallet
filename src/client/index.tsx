@@ -1,19 +1,22 @@
 /**
  * 侧边栏左下角入口：与「用量账本」同槽，点击弹出站点真实账本。
+ * DSH 0.2 适配：槽位 props 由运行时按 SlotMap 组装（owner props `wide` +
+ * 标准 props），这里只声明本组件实际读取的字段，运行时 import 归零。
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
-import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import {
-  IconApiOutline14,
-  IconCloseOutline16,
-  IconRefreshOutline14,
+  IconApiOutlineRegular,
+  IconCloseOutlineRegular,
+  IconRefreshOutlineRegular,
   useDismissOnOutsidePointer,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { AccountListItem, Money, TokenBuckets, WalletBundle, WalletError, WalletPayload, WalletSnapshot } from '../shared.ts'
 
-type SeatProps = PropsRuntime<'sidebar.footer.action'>
+/** `sidebar.footer.action` 槽位实际消费的 props（owner: wide）。 */
+interface SeatProps {
+  /** 侧栏是否渲染宽内容（false = 56px 窄轨）。 */
+  wide?: boolean
+}
 
 const PATH = '/api/gateway-wallet'
 const REFRESH_MS = 45_000
@@ -463,7 +466,7 @@ function WalletBody({
   )
 }
 
-function WalletSeat({ wide, useSessions }: SeatProps) {
+function WalletSeat({ wide = true, useSessions }: SeatProps & { useSessions?: (selector: (state: { ids: readonly string[]; byId: Record<string, { running?: boolean }> }) => boolean) => boolean }) {
   ensureCss()
   const [open, setOpen] = useState(false)
   const [inspectRoute, setInspectRoute] = useState<string | undefined>(undefined)
@@ -478,7 +481,8 @@ function WalletSeat({ wide, useSessions }: SeatProps) {
   const lastGoodRef = useRef(lastGood)
   lastGoodRef.current = lastGood
   const root = useRef<HTMLDivElement>(null)
-  const running = useSessions(state => state.ids.some(id => state.byId[id]?.running === true))
+  // 会话运行结束时自动刷新一次；标准 props 里拿不到 useSessions 时静默跳过。
+  const running = useSessions?.(state => state.ids.some(id => state.byId[id]?.running === true)) ?? false
 
   useEffect(() => {
     const controller = new AbortController()
@@ -608,7 +612,7 @@ function WalletSeat({ wide, useSessions }: SeatProps) {
         onClick={() => setOpen(value => !value)}
       >
         <span className="gww_badgeIcon">
-          <IconApiOutline14 size={wide === false ? 18 : 14} />
+          <IconApiOutlineRegular size={wide === false ? 18 : 14} />
           {low && <span className="gww_dot" aria-hidden="true" />}
         </span>
         <span className="gww_badgeLabel">站点余额</span>
@@ -631,7 +635,7 @@ function WalletSeat({ wide, useSessions }: SeatProps) {
                 aria-label="刷新"
                 onClick={reload}
               >
-                <IconRefreshOutline14 size={14} />
+                <IconRefreshOutlineRegular size={14} />
               </button>
               <button
                 type="button"
@@ -639,7 +643,7 @@ function WalletSeat({ wide, useSessions }: SeatProps) {
                 aria-label="关闭"
                 onClick={() => setOpen(false)}
               >
-                <IconCloseOutline16 size={16} />
+                <IconCloseOutlineRegular size={16} />
               </button>
             </div>
           </div>
@@ -668,7 +672,7 @@ function WalletSeat({ wide, useSessions }: SeatProps) {
 export const name = 'dsh-gateway-wallet'
 export const inject = ['slots']
 
-export function apply(ctx: ClientContext): void {
+export function apply(ctx: { slots: { inject: (name: string, register: () => unknown) => unknown; register: (options: Record<string, unknown>, component: unknown) => unknown } }): void {
   ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
     name: 'sidebar.footer.action',
     id: 'dsh-gateway-wallet',
